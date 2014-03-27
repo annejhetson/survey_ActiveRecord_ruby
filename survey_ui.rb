@@ -29,15 +29,17 @@ def welcome
 end
 
 def designer_menu
-  clear
   puts "=== DESIGNER MENU ==="
-  puts " Press 's' to go to the survey options menu"
-  puts " Press 'q' to go to the question options menu"
+  puts " Press 's' to go to the survey options"
+  puts " Press 'q' to go to the question options"
+  puts " Press 'a' to go to the answer options"
   choice = gets.chomp
   if choice == 's'
     survey_options
   elsif choice == 'q'
     question_options
+  elsif choice == 'a'
+    answer_options
   else
     clear
     error
@@ -107,11 +109,14 @@ def survey_menu
   puts "Select one of the surveys you would like to take"
   user_survey = gets.chomp
 
-  b = Survey.where({survey_title: user_survey}).first.id.to_i
-  Question.where({survey_id: b}).each do |x|
-    puts "#{x.question}"
+  that_survey = Survey.where({survey_title: user_survey}).first
+  that_survey.questions.each do |qs|
+    puts "#{qs.question}"
     answer = gets.chomp
+    qs.answers.create({answer: answer})    
   end
+  puts "\e[3;33mThank you for participating in our survey!"
+  puts "---------------GOOD_BYE------------------\e[0;0m"
 end
 
 ##--------SURVEY OPTIONS--------##
@@ -160,7 +165,7 @@ def delete_survey
 end
 
 
-##--------QUESTIONS MENU--------##
+##--------QUESTION OPTIONS--------##
 
 def add_questions
   list_surveys
@@ -168,23 +173,24 @@ def add_questions
   survey = gets.chomp
   chosen_survey = Survey.where({survey_title: survey}).first
 
-  puts "Please enter a question."
+  puts "\nPlease enter a question."
   new_question = gets.chomp
-  # binding.pry
-  Question.create({question: new_question, survey_id: chosen_survey.id})
-  puts "#{new_question} has been added to the #{survey}"
+  chosen_survey.questions.create({question: new_question})
+  binding.pry
+  puts "'#{chosen_survey.questions[-1].question}' has been added to the #{chosen_survey.survey_title}\n"
   puts "Would you like to add more questions? Y or N?"
   choice = gets.chomp.downcase
   if choice == 'y'
+    clear
     add_questions
   elsif choice == 'n'
+    clear
     question_options
   else
     clear
     error
     question_options
   end
- # chosen_survey.questions.new({question: new_question})
 end
 
 def list_questions
@@ -236,6 +242,33 @@ def edit_question
   puts "again, the new question is #{question.question}"
   puts "in #{new_survey_name}"
   question_options
+end
+
+##--------ANSWER OPTIONS--------##
+
+def answer_options
+  list_surveys
+  puts " Select the survey you would like to see the answer\n"
+  the_survey = gets.chomp
+  the_survey = Survey.where({survey_title: the_survey}).first
+  the_survey.questions.each_with_index { |qs, index| puts "#{index +1}) #{qs.question}"}
+  puts " Select question number to see all answers"
+  number = gets.chomp.to_i
+  if number == 0
+    clear
+    error
+    sleep(2)
+    answer_options
+  else
+    clear
+    puts " ====SURVEY: #{the_survey.survey_title}===="
+    puts " QUESTION: #{the_survey.questions[number-1].question}"
+    puts " ANSWERS:"
+    the_survey.questions[number-1].answers.each do |ans|
+      puts "- #{ans.answer}"
+    end
+    designer_menu
+  end
 end
 
 #~~~~~~~~OTHERS~~~~~#
