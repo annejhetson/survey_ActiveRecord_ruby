@@ -46,7 +46,6 @@ def designer_menu
 end
 
 def survey_options
-  clear
   puts "=== SURVEY OPTIONS ==="
   puts " Press 's' to make a new survey"
   puts "       'l' to list surveys"
@@ -58,7 +57,7 @@ def survey_options
     add_survey
   when 'l'
     list_surveys
-    designer_menu
+    survey_options
   when 'e'
     list_surveys
     edit_survey
@@ -76,7 +75,6 @@ def survey_options
 end
 
 def question_options
-  clear
   puts "=== QUESTION OPTIONS ==="
   puts " Press 'a' to add a new question"
   puts "       'l' to list questions"
@@ -88,7 +86,7 @@ def question_options
     add_questions
   when 'l'
     list_questions
-    designer_menu
+    question_options
   when 'e'
     list_surveys
     edit_question
@@ -103,7 +101,20 @@ def question_options
   end
 end
 
-##--------SURVEY MENU--------##
+##-------SURVEY TAKER MENU------##
+def survey_menu
+  list_surveys
+  puts "Select one of the surveys you would like to take"
+  user_survey = gets.chomp
+
+  b = Survey.where({survey_title: user_survey}).first.id.to_i
+  Question.where({survey_id: b}).each do |x|
+    puts "#{x.question}"
+    answer = gets.chomp
+  end
+end
+
+##--------SURVEY OPTIONS--------##
 
 def add_survey
   clear
@@ -186,6 +197,45 @@ def list_questions
     puts "#{x.question} survey:#{survey_name.survey_title}"
   end
   puts "======================"
+end
+
+def delete_question
+  clear
+  Question.all.each_with_index do |x, index|
+    puts "#{index + 1}) #{x.question}"
+  end
+
+  puts "Enter the number of the one you would you like to delete."
+  number = gets.chomp.to_i
+  name = Question.all[number - 1].question
+  Question.all[number - 1].destroy
+  puts "#{name} has been deleted!!"
+  question_options
+end
+
+def edit_question
+  clear
+  Question.all.each_with_index do |x, index|
+    puts "#{index + 1}) #{x.question}"
+  end
+
+  puts "Enter the number of the question you would like to edit."
+  number = gets.chomp.to_i
+  question = Question.all[number - 1]
+  old_question = question.question
+  puts "Please enter the new question"
+  new_question_text = gets.chomp
+
+  list_surveys
+  puts "\n What survey does the question go with?"
+  new_survey_name = gets.chomp
+  survey_object = Survey.where({survey_title: new_survey_name}).first
+  question.update({question: new_question_text, survey_id: survey_object.id})
+
+  puts "#{old_question} has been changed"
+  puts "again, the new question is #{question.question}"
+  puts "in #{new_survey_name}"
+  question_options
 end
 
 #~~~~~~~~OTHERS~~~~~#
